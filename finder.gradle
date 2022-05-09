@@ -1,0 +1,11 @@
+apply plugin: 'com.zxo.finder.plugin'
+
+finderConfig{
+    classes = [
+            'android/os/Build'
+    ]
+    ignorePrefixes = [
+            'androidx/', 'android/', 'com/google', 'com/zxo/sample/BaseInfo'
+    ]
+
+}

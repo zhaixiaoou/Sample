@@ -1,4 +1,5 @@
 apply plugin: 'com.android.application'
+apply from: rootProject.file('finder.gradle')
 
 android {
     compileSdkVersion 29

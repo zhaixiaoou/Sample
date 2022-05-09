@@ -1,0 +1,70 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.zxo.finder",
+    "module": "finder-plugin",
+    "version": "0.1",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "6.1.1",
+      "buildId": "ynhezganpzdm7blbus2vtzibhi"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "finder-plugin-0.1.jar",
+          "url": "finder-plugin-0.1.jar",
+          "size": 12692,
+          "sha512": "9e21714ef25a0c8f8d13036f998320cb7abfbb6c04f7f8bda5a8494abb1e6b3f09aea6b4765b634eabe6d49dbb5b27f79f9acd4aa35fcd37a2f2c9c60f458bff",
+          "sha256": "bfa3b34da6f90cf9055c8663af2c66bd2f1ef3a2f270483852a6b657da3f02ad",
+          "sha1": "1fffe17d5acd612c64951c4712b203c8386b0dca",
+          "md5": "8f8edeef202c73de8cf8f4e2a761d4ac"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.android.tools.build",
+          "module": "gradle",
+          "version": {
+            "requires": "4.0.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "finder-plugin-0.1.jar",
+          "url": "finder-plugin-0.1.jar",
+          "size": 12692,
+          "sha512": "9e21714ef25a0c8f8d13036f998320cb7abfbb6c04f7f8bda5a8494abb1e6b3f09aea6b4765b634eabe6d49dbb5b27f79f9acd4aa35fcd37a2f2c9c60f458bff",
+          "sha256": "bfa3b34da6f90cf9055c8663af2c66bd2f1ef3a2f270483852a6b657da3f02ad",
+          "sha1": "1fffe17d5acd612c64951c4712b203c8386b0dca",
+          "md5": "8f8edeef202c73de8cf8f4e2a761d4ac"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+apply plugin: 'maven-publish'
+
+task sourceJar(type: Jar) {
+    archiveClassifier.set('sources')
+    from sourceSets.main.allSource
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                from components.java
+
+                groupId = 'com.zxo.finder'
+                artifactId = 'finder-plugin'
+                version = '0.2'
+            }
+        }
+
+        repositories { RepositoryHandler handler ->
+            handler.maven {
+                url "${rootDir}/repo"
+            }
+        }
+    }
+}
