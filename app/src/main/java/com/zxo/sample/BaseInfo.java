@@ -8,4 +8,8 @@ public class BaseInfo {
         return Build.BRAND;
     }
 
+    public static String getAndroidVersion(){
+        return Build.VERSION.RELEASE;
+    }
+
 }

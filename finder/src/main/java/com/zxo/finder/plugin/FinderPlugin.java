@@ -76,7 +76,12 @@ public class FinderPlugin implements Plugin<Project> {
             TransformOutputProvider outputProvider = transformInvocation.getOutputProvider();
             // 获取配置信息
             FinderConfig config = (FinderConfig) project.getProperties().get(CONFIG_KEY);
-            finderAnalyzer.setConfig(config);
+            try{
+                finderAnalyzer.setConfig(config);
+            } catch (Throwable e){
+                e.printStackTrace();
+            }
+
 
             for (TransformInput i : inputs){
                 Collection<JarInput> jars = i.getJarInputs();
@@ -84,7 +89,7 @@ public class FinderPlugin implements Plugin<Project> {
                 for (JarInput j : jars){
                     File input = j.getFile();
                     File output = outputProvider.getContentLocation(j.getName(), j.getContentTypes(), j.getScopes(), Format.JAR);
-                    finderAnalyzer.execute(input);
+//                    finderAnalyzer.execute(input);
                     FileUtils.copyFile(input, output);
                 }
                 // 处理文件夹

@@ -2,6 +2,7 @@ package com.zxo.finder.plugin.asm;
 
 import com.zxo.finder.plugin.AbsFinderAnalyzer;
 import com.zxo.finder.plugin.FinderPlugin;
+import com.zxo.finder.plugin.IReplace;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
@@ -11,14 +12,16 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
 
 public class AsmFinderAnalyzer extends AbsFinderAnalyzer {
 
-    private FinderClassVisitor classVisitor = new FinderClassVisitor();
+    private final String REPLACE_OWNER = "com/zxo/sample/BaseInfo";
+    private final String REPLACE_DESCRIPTOR_STRING = "()Ljava/lang/String;";
+
+    private FinderClassVisitor classVisitor;
     private FinderMethodVisitor methodVisitor = new FinderMethodVisitor();
 
     private String className;
@@ -28,11 +31,32 @@ public class AsmFinderAnalyzer extends AbsFinderAnalyzer {
 
     @Override
     protected void onAnalyze(byte[] byteCodes, String absolutePath) {
-        if (byteCodes == null){
+        if (byteCodes == null) {
             return;
         }
+        printLabel("绝对路径=" + absolutePath);
         ClassReader reader = new ClassReader(byteCodes);
+        ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES);
+        classVisitor = new FinderClassVisitor(writer);
         reader.accept(classVisitor, 0);
+        byte[] outputBytes = writer.toByteArray();
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(absolutePath);
+            fos.write(outputBytes);
+            fos.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    @Override
+    protected HashMap<String, IReplace> getDefaultReplaceFieldTarget() {
+        HashMap<String, IReplace> fieldTarget = new HashMap<>();
+        fieldTarget.put("android/os/Build.BRAND:Ljava/lang/String;", new ASMReplaceBean(REPLACE_OWNER, "getBrand", REPLACE_DESCRIPTOR_STRING));
+        fieldTarget.put("android/os/Build$VERSION.RELEASE:Ljava/lang/String;", new ASMReplaceBean(REPLACE_OWNER, "getAndroidVersion", REPLACE_DESCRIPTOR_STRING));
+        return fieldTarget;
     }
 
     private class FinderClassVisitor extends ClassVisitor {
@@ -41,7 +65,7 @@ public class AsmFinderAnalyzer extends AbsFinderAnalyzer {
             super(Opcodes.ASM6, cw);
         }
 
-        public FinderClassVisitor(){
+        public FinderClassVisitor() {
             super(Opcodes.ASM6);
         }
 
@@ -75,6 +99,7 @@ public class AsmFinderAnalyzer extends AbsFinderAnalyzer {
             return this;
         }
 
+        // 倒数第一
         @Override
         public void visitEnd() {
             super.visitEnd();
@@ -91,25 +116,62 @@ public class AsmFinderAnalyzer extends AbsFinderAnalyzer {
         @Override
         public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
             String target = owner + "." + name + descriptor;
-            if ((isClassMatched(owner) || isMethodMatched(target)) && !isIgnorePrefix(className+"."+methodName)){
+            if ((isClassMatched(owner) || isMethodMatched(target)) && !isIgnorePrefix(className + "." + methodName)) {
+                printLabel("调用方法名");
                 print(target, className, methodName, lineNumber, inputFile);
-            } else {
-                super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
-            }
 
+            }
+            super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
         }
 
         // 访问方法中的局部变量
         @Override
         public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {
-            String target = owner + "." + name + descriptor;
+            String target = owner + "." + name + ":"+descriptor;
+            printLabel("局部变量");
 
-            if ((isClassMatched(owner) || isMethodMatched(target)) && !isIgnorePrefix(className+"."+methodName)){
+            // 检查扫描
+            if ((isClassMatched(owner) || isFieldMatched(target)) && !isIgnorePrefix(className + "." + methodName)) {
                 print(target, className, methodName, lineNumber, inputFile);
-            } else {
-                super.visitFieldInsn(opcode, owner, name, descriptor);
+            }
+            try {
+                if (isReplaceEnable() && !isReplaceIgnore(className+"."+methodName)){
+                    IReplace replaceTarget = getReplaceFieldTarget(target);
+                    if (replaceTarget instanceof ASMReplaceBean){
+                        ASMReplaceBean replaceBean = (ASMReplaceBean) replaceTarget;
+                        String modifyTarget = replaceBean.owner+"."+replaceBean.name+descriptor;
+                        printReplace(target, modifyTarget, className, methodName, lineNumber, inputFile);
+                        super.visitMethodInsn(Opcodes.INVOKESTATIC, replaceBean.owner, replaceBean.name, replaceBean.descriptor, false);
+                        return;
+                    }
+                }
+
+            } catch (Throwable e){
+                e.printStackTrace();
             }
 
+            super.visitFieldInsn(opcode, owner, name, descriptor);
+
+
+        }
+
+        // 1
+        @Override
+        public void visitCode() {
+            super.visitCode();
+        }
+
+        // 2
+        @Override
+        public void visitInsn(int opcode) {
+            super.visitInsn(opcode);
+        }
+
+        // 倒数第二
+        // 如果新增变量，需要更新操作数栈 即更新slots
+        @Override
+        public void visitMaxs(int maxStack, int maxLocals) {
+            super.visitMaxs(maxStack, maxLocals);
         }
     }
 }

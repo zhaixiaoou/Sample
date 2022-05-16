@@ -14,10 +14,14 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         String brand = Build.BRAND;
+        String brandInfo = BaseInfo.getBrand();
+        String version = Build.VERSION.RELEASE;
         String model = "sfsg";
         String test = getTest();
 
         log(brand);
+        log(brandInfo);
+        log(version);
         log(model);
         log(test);
     }

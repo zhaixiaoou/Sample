@@ -7,8 +7,11 @@ import org.apache.commons.io.IOUtils;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -20,8 +23,12 @@ public abstract class AbsFinderAnalyzer {
     abstract protected void onAnalyze(byte[] byteCodes, String absolutePath);
 
     private FinderConfig config;
+
     private final HashSet<String> targetClasses = new HashSet<>();
     private final HashSet<String> targetMethods = new HashSet<>();
+    private final HashSet<String> targetFields = new HashSet<>();
+    private final HashMap<String, IReplace> replaceFieldTarget = new HashMap<>();
+    private final List<String> replaceIgnorePrefixes = new ArrayList<>();
 
     protected File inputFile;
 
@@ -34,6 +41,16 @@ public abstract class AbsFinderAnalyzer {
         if (config.methods != null) {
             targetMethods.addAll(config.methods);
         }
+        if (config.fields != null){
+            targetFields.addAll(config.fields);
+        }
+        if (config.replaceEnable){
+            replaceFieldTarget.putAll(getDefaultReplaceFieldTarget());
+            if ( config.ignoreReplacePrefixes != null && !config.ignoreReplacePrefixes.isEmpty()){
+                replaceIgnorePrefixes.addAll(config.ignoreReplacePrefixes);
+            }
+            replaceIgnorePrefixes.addAll(getDefaultReplaceIgnore());
+        }
     }
 
     protected boolean isClassMatched(String targetClass) {
@@ -42,6 +59,10 @@ public abstract class AbsFinderAnalyzer {
 
     protected boolean isMethodMatched(String targetMethod) {
         return targetMethods.contains(targetMethod);
+    }
+
+    protected boolean isFieldMatched(String targetField){
+        return targetFields.contains(targetField);
     }
 
     protected boolean isIgnorePrefix(String invoker) {
@@ -53,6 +74,28 @@ public abstract class AbsFinderAnalyzer {
             }
         }
         return false;
+    }
+
+    protected boolean isReplaceEnable(){
+        return config.replaceEnable;
+    }
+
+    protected IReplace getReplaceFieldTarget(String target){
+       return replaceFieldTarget.get(target);
+    }
+
+
+    protected boolean isReplaceIgnore(String invoker){
+        for (String prefix : replaceIgnorePrefixes){
+            if (invoker.startsWith(prefix)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    protected void printLabel(String label){
+        FinderPlugin.log(label);
     }
 
     protected void print(String target, String className, String methodName, int lineNumber, File inputFile) {
@@ -69,6 +112,21 @@ public abstract class AbsFinderAnalyzer {
         }
     }
 
+    protected void printReplace(String target, String replaceTarget,  String className, String methodName, int lineNumber, File inputFile){
+        if (methodName == null || methodName.length() == 0) {
+            FinderPlugin.log(
+                    "\nMatched:" + target +
+                            "\nReplaced:" + replaceTarget +
+                            "\nLocation:" + className + "(" + lineNumber + ")" +
+                            "\nFile:" + inputFile.getAbsolutePath());
+        } else {
+            FinderPlugin.log(
+                    "\nMatched:" + target +
+                            "\nReplaced:" + replaceTarget +
+                            "\nLocation:" + className + "." + methodName + "(" + lineNumber + ")" +
+                            "\nFile:" + inputFile.getAbsolutePath());
+        }
+    }
 
     public void execute(File inputFile) {
         this.inputFile = inputFile;
@@ -156,4 +214,14 @@ public abstract class AbsFinderAnalyzer {
         return null;
     }
 
+    abstract protected   HashMap<String, IReplace> getDefaultReplaceFieldTarget();
+
+    private ArrayList<String> getDefaultReplaceIgnore(){
+        ArrayList<String> replaceIgnore = new ArrayList<>();
+        replaceIgnore.add("androidx/");
+        replaceIgnore.add("android/");
+        replaceIgnore.add("com/google");
+        replaceIgnore.add("com/zxo/sample/BaseInfo");
+        return replaceIgnore;
+    }
 }

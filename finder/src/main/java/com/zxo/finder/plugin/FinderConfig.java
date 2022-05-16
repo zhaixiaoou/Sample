@@ -11,5 +11,11 @@ public class FinderConfig {
 
     public List<String> methods;
 
+    public List<String> fields;
+
     public List<String> ignorePrefixes;
+
+    public List<String> ignoreReplacePrefixes;
+
+    public boolean replaceEnable = false;
 }
