@@ -20,6 +20,7 @@ public class AsmFinderAnalyzer extends AbsFinderAnalyzer {
 
     private final String REPLACE_OWNER = "com/zxo/sample/BaseInfo";
     private final String REPLACE_DESCRIPTOR_STRING = "()Ljava/lang/String;";
+    private final String REPLACE_DESCRIPTOR_INT = "()I";
 
     private FinderClassVisitor classVisitor;
     private FinderMethodVisitor methodVisitor = new FinderMethodVisitor();
@@ -58,6 +59,14 @@ public class AsmFinderAnalyzer extends AbsFinderAnalyzer {
         fieldTarget.put("android/os/Build$VERSION.RELEASE:Ljava/lang/String;", new ASMReplaceBean(REPLACE_OWNER, "getAndroidVersion", REPLACE_DESCRIPTOR_STRING));
         return fieldTarget;
     }
+
+    @Override
+    protected HashMap<String, IReplace> getDefaultReplaceMethodTarget() {
+        HashMap<String, IReplace> methodTarget = new HashMap<>();
+        methodTarget.put("android/telephony/TelephonyManager.getNetworkType()I", new ASMReplaceBean(REPLACE_OWNER, "getNetworkType", REPLACE_DESCRIPTOR_INT));
+        return methodTarget;
+    }
+
 
     private class FinderClassVisitor extends ClassVisitor {
 
@@ -119,7 +128,16 @@ public class AsmFinderAnalyzer extends AbsFinderAnalyzer {
             if ((isClassMatched(owner) || isMethodMatched(target)) && !isIgnorePrefix(className + "." + methodName)) {
                 printLabel("调用方法名");
                 print(target, className, methodName, lineNumber, inputFile);
-
+            }
+            if (isReplaceEnable() && !isReplaceIgnore(className+"."+methodName)){
+                IReplace replaceTarget = getReplaceMethodTarget(target);
+                if (replaceTarget instanceof ASMReplaceBean){
+                    ASMReplaceBean replaceBean = (ASMReplaceBean) replaceTarget;
+                    String modifyTarget = replaceBean.owner+"."+replaceBean.name+descriptor;
+                    printReplace(target, modifyTarget, className, methodName, lineNumber, inputFile);
+                    super.visitMethodInsn(Opcodes.INVOKESTATIC, replaceBean.owner, replaceBean.name, replaceBean.descriptor, false);
+                    return;
+                }
             }
             super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
         }

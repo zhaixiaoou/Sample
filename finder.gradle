@@ -3,7 +3,9 @@ apply plugin: 'com.zxo.finder.plugin'
 finderConfig{
     classes = [
             'android/os/Build',
-            'com/zxo/sample/MainActivity'
+            'com/zxo/sample/MainActivity',
+            'android/telephony/TelephonyManager',
+            'android/provider/Setting$System'
     ]
     methods = [
     ]

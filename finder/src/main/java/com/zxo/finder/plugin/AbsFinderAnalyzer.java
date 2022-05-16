@@ -28,6 +28,7 @@ public abstract class AbsFinderAnalyzer {
     private final HashSet<String> targetMethods = new HashSet<>();
     private final HashSet<String> targetFields = new HashSet<>();
     private final HashMap<String, IReplace> replaceFieldTarget = new HashMap<>();
+    private final HashMap<String, IReplace> replaceMethodTarget = new HashMap<>();
     private final List<String> replaceIgnorePrefixes = new ArrayList<>();
 
     protected File inputFile;
@@ -46,6 +47,7 @@ public abstract class AbsFinderAnalyzer {
         }
         if (config.replaceEnable){
             replaceFieldTarget.putAll(getDefaultReplaceFieldTarget());
+            replaceMethodTarget.putAll(getDefaultReplaceMethodTarget());
             if ( config.ignoreReplacePrefixes != null && !config.ignoreReplacePrefixes.isEmpty()){
                 replaceIgnorePrefixes.addAll(config.ignoreReplacePrefixes);
             }
@@ -84,6 +86,9 @@ public abstract class AbsFinderAnalyzer {
        return replaceFieldTarget.get(target);
     }
 
+    protected IReplace getReplaceMethodTarget(String target){
+        return replaceMethodTarget.get(target);
+    }
 
     protected boolean isReplaceIgnore(String invoker){
         for (String prefix : replaceIgnorePrefixes){
@@ -215,6 +220,7 @@ public abstract class AbsFinderAnalyzer {
     }
 
     abstract protected   HashMap<String, IReplace> getDefaultReplaceFieldTarget();
+    abstract protected   HashMap<String, IReplace> getDefaultReplaceMethodTarget();
 
     private ArrayList<String> getDefaultReplaceIgnore(){
         ArrayList<String> replaceIgnore = new ArrayList<>();

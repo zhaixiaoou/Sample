@@ -11,7 +11,7 @@
   "createdBy": {
     "gradle": {
       "version": "6.1.1",
-      "buildId": "g3pdhdr6rzbpfdqddn3srghrpm"
+      "buildId": "yib7d7hs4vbxji4buhskb5n3hq"
     }
   },
   "variants": [
@@ -28,11 +28,11 @@
         {
           "name": "finder-plugin-0.3.jar",
           "url": "finder-plugin-0.3.jar",
-          "size": 16303,
-          "sha512": "133075cdbe104ab7a2af4683deb7858af7e8239516e83fd4ece295bcd88ca844ec2c68acb7e16b98d7ac9140103f45ed8731ea284e4531261e4c7271b679195c",
-          "sha256": "9561ffb2c745b8f55ea5f6903570d6e992ca9d668340ca1afe07c05d310ca58d",
-          "sha1": "e3c4571f3d02bc63de91f689fffbc4f17474f052",
-          "md5": "41393e46d92252383604bb25723e97d7"
+          "size": 16725,
+          "sha512": "7e1d58919975f5c682935667acbfef1f56b7440276c44bbab53ecca3b1cff8437be4db02d089f628c833b26cd753ff0f963bd7a0ba1a43f1d15106434c787b2a",
+          "sha256": "7ed837a67d2284a563f242acf140d43b0a749878f0c8ab448e47be3730d9eae1",
+          "sha1": "c5821409c27b3492408bddcc6742cb4447a7c1b7",
+          "md5": "07c612db10751ae903396dc5b194ebab"
         }
       ]
     },
@@ -58,11 +58,11 @@
         {
           "name": "finder-plugin-0.3.jar",
           "url": "finder-plugin-0.3.jar",
-          "size": 16303,
-          "sha512": "133075cdbe104ab7a2af4683deb7858af7e8239516e83fd4ece295bcd88ca844ec2c68acb7e16b98d7ac9140103f45ed8731ea284e4531261e4c7271b679195c",
-          "sha256": "9561ffb2c745b8f55ea5f6903570d6e992ca9d668340ca1afe07c05d310ca58d",
-          "sha1": "e3c4571f3d02bc63de91f689fffbc4f17474f052",
-          "md5": "41393e46d92252383604bb25723e97d7"
+          "size": 16725,
+          "sha512": "7e1d58919975f5c682935667acbfef1f56b7440276c44bbab53ecca3b1cff8437be4db02d089f628c833b26cd753ff0f963bd7a0ba1a43f1d15106434c787b2a",
+          "sha256": "7ed837a67d2284a563f242acf140d43b0a749878f0c8ab448e47be3730d9eae1",
+          "sha1": "c5821409c27b3492408bddcc6742cb4447a7c1b7",
+          "md5": "07c612db10751ae903396dc5b194ebab"
         }
       ]
     }
