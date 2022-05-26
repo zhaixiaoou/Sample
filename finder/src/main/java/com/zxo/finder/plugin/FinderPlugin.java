@@ -1,6 +1,7 @@
 package com.zxo.finder.plugin;
 
 
+import com.android.annotations.NonNull;
 import com.android.build.api.transform.DirectoryInput;
 import com.android.build.api.transform.Format;
 import com.android.build.api.transform.JarInput;
@@ -13,17 +14,28 @@ import com.android.build.api.transform.TransformOutputProvider;
 import com.android.build.gradle.AppExtension;
 import com.android.build.gradle.BaseExtension;
 import com.android.build.gradle.internal.pipeline.TransformManager;
+import com.android.build.gradle.internal.scope.BootClasspathBuilder;
 import com.zxo.finder.plugin.asm.AsmFinderAnalyzer;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.file.FileCollection;
+import org.gradle.api.internal.file.CompositeFileCollection;
+import org.gradle.internal.impldep.com.google.common.collect.ImmutableList;
+import org.gradle.internal.impldep.com.google.common.collect.Iterables;
+import org.gradle.plugins.ide.idea.model.Path;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Files;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 public class FinderPlugin implements Plugin<Project> {
@@ -49,12 +61,13 @@ public class FinderPlugin implements Plugin<Project> {
        Object android = target.getProperties().get("android");
        if (android instanceof BaseExtension){
            BaseExtension ext = (BaseExtension) android;
+
            ext.registerTransform(new FinderTransform(ext, target));
        } else {
            throw new IllegalStateException("'android' or 'android library' plugin required");
        }
-    }
 
+    }
 
     ///////////////////////////////////////////
     /// Transform
@@ -63,9 +76,12 @@ public class FinderPlugin implements Plugin<Project> {
         private BaseExtension android;
         private Project project;
 
+        private URLClassLoader classLoader;
+
         private FinderTransform(BaseExtension android, Project project){
             this.android = android;
             this.project = project;
+
         }
 
         @Override
@@ -89,7 +105,7 @@ public class FinderPlugin implements Plugin<Project> {
                 for (JarInput j : jars){
                     File input = j.getFile();
                     File output = outputProvider.getContentLocation(j.getName(), j.getContentTypes(), j.getScopes(), Format.JAR);
-//                    finderAnalyzer.execute(input);
+                    finderAnalyzer.execute(input, getClassLoader(input.getAbsolutePath()));
                     FileUtils.copyFile(input, output);
                 }
                 // 处理文件夹
@@ -121,6 +137,17 @@ public class FinderPlugin implements Plugin<Project> {
                 }
             }
 
+        }
+
+        private ClassLoader getClassLoader(String path) {
+            FinderPlugin.log("jar path ="+path);
+//            try {
+//                URL url = new File(path).toURI().toURL();
+//                return new URLClassLoader(new URL[] {url});
+//            } catch (MalformedURLException e) {
+//                e.printStackTrace();
+//            }
+            return null;
         }
 
         @Override

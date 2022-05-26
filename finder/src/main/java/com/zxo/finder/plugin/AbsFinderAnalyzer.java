@@ -5,6 +5,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -14,6 +15,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * 分析字节码基础类
@@ -21,6 +24,7 @@ import java.util.jar.JarFile;
 public abstract class AbsFinderAnalyzer {
 
     abstract protected void onAnalyze(byte[] byteCodes, String absolutePath);
+    abstract protected byte[] onAnalyzeJar(byte[] byteCodes, ClassLoader classLoader);
 
     private FinderConfig config;
 
@@ -134,6 +138,10 @@ public abstract class AbsFinderAnalyzer {
     }
 
     public void execute(File inputFile) {
+        this.execute(inputFile, null);
+    }
+
+    public void execute(File inputFile, ClassLoader classLoader) {
         this.inputFile = inputFile;
 
         try {
@@ -141,13 +149,11 @@ public abstract class AbsFinderAnalyzer {
             if (jar == null) {
                 scanDirectory();
             } else {
-                scanJar(jar);
+                scanJar(jar, inputFile, classLoader);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-
     }
 
     private JarFile checkJar() {
@@ -162,16 +168,46 @@ public abstract class AbsFinderAnalyzer {
         return null;
     }
 
-    private void scanJar(JarFile jar) throws IOException {
+    private void scanJar(JarFile jar, File inputFile, ClassLoader classLoader) throws IOException {
         Enumeration<JarEntry> entries = jar.entries();
+
+        File outputFile = new File("output.jar");
+
+        if (outputFile.exists()){
+            if (!outputFile.delete()){
+                FinderPlugin.log("删除修改后的目录，未成功，终止操作");
+                System.exit(0);
+            }
+        }
+        // 目标输出文件
+        ZipOutputStream outputStream = new ZipOutputStream(new FileOutputStream(outputFile));
+
         while (entries.hasMoreElements()) {
+
             JarEntry jarEntry = entries.nextElement();
+
             if (jarEntry.isDirectory() || !jarEntry.getName().endsWith(".class")) {
+                // 直接写回jar包
+                ZipEntry result = new ZipEntry(jarEntry.getName());
+                outputStream.putNextEntry(result);
+                IOUtils.copy(jar.getInputStream(jarEntry), outputStream);
+                outputStream.closeEntry();
                 continue;
             }
-            onAnalyze(read(jar, jarEntry), "");
+
+            byte[] output = onAnalyzeJar(read(jar, jarEntry), classLoader);
+
+            ZipEntry result = new ZipEntry(jarEntry.getName());
+            outputStream.putNextEntry(result);
+            outputStream.write(output);
+            outputStream.closeEntry();
         }
+
         jar.close();
+        outputStream.flush();
+        outputStream.close();
+        FileUtils.copyFile(outputFile, inputFile);
+        outputFile.delete();
     }
 
     private void scanDirectory() {
