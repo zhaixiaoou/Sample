@@ -11,9 +11,11 @@ import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.util.CheckClassAdapter;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.HashMap;
 
 public class AsmFinderAnalyzer extends AbsFinderAnalyzer {
@@ -24,6 +26,7 @@ public class AsmFinderAnalyzer extends AbsFinderAnalyzer {
 
     private FinderClassVisitor classVisitor;
     private FinderMethodVisitor methodVisitor = new FinderMethodVisitor();
+    private FinderClassWriter classWriter;
 
     private String className;
     private String methodName;
@@ -31,25 +34,16 @@ public class AsmFinderAnalyzer extends AbsFinderAnalyzer {
     private int lineNumber;
 
     @Override
-    protected void onAnalyze(byte[] byteCodes, String absolutePath) {
+    protected byte[] onAnalyze(byte[] byteCodes) {
         if (byteCodes == null) {
-            return;
+            return null;
         }
-        printLabel("绝对路径=" + absolutePath);
         ClassReader reader = new ClassReader(byteCodes);
-        ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_FRAMES);
-        classVisitor = new FinderClassVisitor(writer);
+        classWriter = new FinderClassWriter(reader, ClassWriter.COMPUTE_FRAMES, classLoader);
+        classVisitor = new FinderClassVisitor(classWriter);
         reader.accept(classVisitor, 0);
-        byte[] outputBytes = writer.toByteArray();
-        FileOutputStream fos = null;
-        try {
-            fos = new FileOutputStream(absolutePath);
-            fos.write(outputBytes);
-            fos.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
 
+        return classWriter.toByteArray();
     }
 
     @Override
@@ -129,42 +123,43 @@ public class AsmFinderAnalyzer extends AbsFinderAnalyzer {
                 printLabel("调用方法名");
                 print(target, className, methodName, lineNumber, inputFile);
             }
-            if (isReplaceEnable() && !isReplaceIgnore(className+"."+methodName)){
+            if (isReplaceEnable() && !isReplaceIgnore(className + "." + methodName)) {
                 IReplace replaceTarget = getReplaceMethodTarget(target);
-                if (replaceTarget instanceof ASMReplaceBean){
+                if (replaceTarget instanceof ASMReplaceBean) {
                     ASMReplaceBean replaceBean = (ASMReplaceBean) replaceTarget;
-                    String modifyTarget = replaceBean.owner+"."+replaceBean.name+descriptor;
+                    String modifyTarget = replaceBean.owner + "." + replaceBean.name + descriptor;
                     printReplace(target, modifyTarget, className, methodName, lineNumber, inputFile);
                     super.visitMethodInsn(Opcodes.INVOKESTATIC, replaceBean.owner, replaceBean.name, replaceBean.descriptor, false);
                     return;
                 }
             }
+
             super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
         }
 
         // 访问方法中的局部变量
         @Override
         public void visitFieldInsn(int opcode, String owner, String name, String descriptor) {
-            String target = owner + "." + name + ":"+descriptor;
-            printLabel("局部变量");
+            String target = owner + "." + name + ":" + descriptor;
 
             // 检查扫描
             if ((isClassMatched(owner) || isFieldMatched(target)) && !isIgnorePrefix(className + "." + methodName)) {
+                printLabel("调用属性值");
                 print(target, className, methodName, lineNumber, inputFile);
             }
             try {
-                if (isReplaceEnable() && !isReplaceIgnore(className+"."+methodName)){
+                if (isReplaceEnable() && !isReplaceIgnore(className + "." + methodName)) {
                     IReplace replaceTarget = getReplaceFieldTarget(target);
-                    if (replaceTarget instanceof ASMReplaceBean){
+                    if (replaceTarget instanceof ASMReplaceBean) {
                         ASMReplaceBean replaceBean = (ASMReplaceBean) replaceTarget;
-                        String modifyTarget = replaceBean.owner+"."+replaceBean.name+descriptor;
+                        String modifyTarget = replaceBean.owner + "." + replaceBean.name + ":" + descriptor;
                         printReplace(target, modifyTarget, className, methodName, lineNumber, inputFile);
                         super.visitMethodInsn(Opcodes.INVOKESTATIC, replaceBean.owner, replaceBean.name, replaceBean.descriptor, false);
                         return;
                     }
                 }
 
-            } catch (Throwable e){
+            } catch (Throwable e) {
                 e.printStackTrace();
             }
 
@@ -189,7 +184,57 @@ public class AsmFinderAnalyzer extends AbsFinderAnalyzer {
         // 如果新增变量，需要更新操作数栈 即更新slots
         @Override
         public void visitMaxs(int maxStack, int maxLocals) {
+
             super.visitMaxs(maxStack, maxLocals);
+        }
+    }
+
+    private class FinderClassWriter extends ClassWriter {
+
+        private ClassLoader classLoader;
+
+        public FinderClassWriter(ClassReader classReader, int flags) {
+            this(classReader, flags, null);
+        }
+
+        public FinderClassWriter(ClassReader classReader, int flags, ClassLoader classLoader) {
+            super(classReader, flags);
+            this.classLoader = classLoader;
+        }
+
+        @Override
+        protected String getCommonSuperClass(String type1, String type2) {
+
+            if (classLoader == null) {
+                return super.getCommonSuperClass(type1, type2);
+            }
+
+            Class<?> c;
+            Class<?> d;
+            ClassLoader classLoader = this.classLoader;
+            try {
+                c = Class.forName(type1.replace('/', '.'), false, classLoader);
+                d = Class.forName(type2.replace('/', '.'), false, classLoader);
+            } catch (Exception e) {
+                throw new RuntimeException(
+                        String.format(
+                                "Unable to find common supper type for %s and %s.", type1, type2),
+                        e);
+            }
+            if (c.isAssignableFrom(d)) {
+                return type1;
+            }
+            if (d.isAssignableFrom(c)) {
+                return type2;
+            }
+            if (c.isInterface() || d.isInterface()) {
+                return "java/lang/Object";
+            } else {
+                do {
+                    c = c.getSuperclass();
+                } while (!c.isAssignableFrom(d));
+                return c.getName().replace('.', '/');
+            }
         }
     }
 }

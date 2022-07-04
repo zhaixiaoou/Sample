@@ -5,7 +5,9 @@ finderConfig{
             'android/os/Build',
             'com/zxo/sample/MainActivity',
             'android/telephony/TelephonyManager',
-            'android/provider/Setting$System'
+            'android/provider/Setting$System',
+            'android/location/LocationManager',
+            'android/telecom/TelecomManager',
     ]
     methods = [
     ]

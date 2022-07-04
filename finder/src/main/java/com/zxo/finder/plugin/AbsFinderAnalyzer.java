@@ -1,12 +1,17 @@
 package com.zxo.finder.plugin;
 
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -14,13 +19,16 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+import java.util.jar.JarOutputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 /**
  * 分析字节码基础类
  */
 public abstract class AbsFinderAnalyzer {
 
-    abstract protected void onAnalyze(byte[] byteCodes, String absolutePath);
+    abstract protected byte[] onAnalyze(byte[] byteCodes);
 
     private FinderConfig config;
 
@@ -32,6 +40,10 @@ public abstract class AbsFinderAnalyzer {
     private final List<String> replaceIgnorePrefixes = new ArrayList<>();
 
     protected File inputFile;
+    protected File outputFile;
+    protected File temporaryDir;
+
+    protected ClassLoader classLoader;
 
     public void setConfig(FinderConfig config) {
         this.config = config;
@@ -53,6 +65,14 @@ public abstract class AbsFinderAnalyzer {
             }
             replaceIgnorePrefixes.addAll(getDefaultReplaceIgnore());
         }
+    }
+
+    protected void setClassLoader(ClassLoader classLoader){
+        this.classLoader = classLoader;
+    }
+
+    protected void setTemporaryDir(File temporaryDir){
+        this.temporaryDir = temporaryDir;
     }
 
     protected boolean isClassMatched(String targetClass) {
@@ -133,8 +153,9 @@ public abstract class AbsFinderAnalyzer {
         }
     }
 
-    public void execute(File inputFile) {
+    public void execute(File inputFile, File output) {
         this.inputFile = inputFile;
+        this.outputFile = output;
 
         try {
             JarFile jar = checkJar();
@@ -145,9 +166,8 @@ public abstract class AbsFinderAnalyzer {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            printLabel("异常"+e);
         }
-
-
     }
 
     private JarFile checkJar() {
@@ -163,15 +183,46 @@ public abstract class AbsFinderAnalyzer {
     }
 
     private void scanJar(JarFile jar) throws IOException {
-        Enumeration<JarEntry> entries = jar.entries();
-        while (entries.hasMoreElements()) {
-            JarEntry jarEntry = entries.nextElement();
-            if (jarEntry.isDirectory() || !jarEntry.getName().endsWith(".class")) {
-                continue;
-            }
-            onAnalyze(read(jar, jarEntry), "");
+
+        File temporaryFile = new File(temporaryDir, DigestUtils.md5Hex(inputFile.getAbsolutePath())+"-"+inputFile.getName());
+        if (temporaryFile.exists()){
+            temporaryFile.delete();
         }
-        jar.close();
+
+        try {
+            // 目标输出文件
+            JarOutputStream jos = new JarOutputStream(new FileOutputStream(temporaryFile));
+
+            Enumeration<JarEntry> entries = jar.entries();
+            while (entries.hasMoreElements()) {
+                JarEntry jarEntry = entries.nextElement();
+                jarEntry.setCompressedSize(-1);
+                ZipEntry result = jarEntry;
+
+                byte[] data = read(jar, jarEntry);
+
+                if (!jarEntry.isDirectory() && jarEntry.getName().endsWith(".class")) {
+                    printLabel("Jar包内class="+jarEntry.getName());
+                    data = onAnalyze(data);
+                    result = new ZipEntry(jarEntry.getName());
+                }
+
+                jos.putNextEntry(result);
+                jos.write(data);
+                jos.closeEntry();
+            }
+
+            jar.close();
+            jos.close();
+            printLabel("临时文件="+temporaryFile);
+            printLabel("目的文件="+outputFile);
+            FileUtils.copyFile(temporaryFile, outputFile);
+        } catch (Throwable e){
+            e.printStackTrace();
+            printLabel("有异常，源文件复制到目标文件"+e);
+            FileUtils.copyFile(inputFile, outputFile);
+        }
+
     }
 
     private void scanDirectory() {
@@ -183,7 +234,7 @@ public abstract class AbsFinderAnalyzer {
 
     }
 
-    private void scan(File target) {
+    private void scan(File target) throws IOException{
         if (target.isDirectory()) {
             File[] files = target.listFiles();
             if (files == null) {
@@ -193,7 +244,12 @@ public abstract class AbsFinderAnalyzer {
                 scan(f);
             }
         } else {
-            onAnalyze(read(target), target.getAbsolutePath());
+            String qualifiedName = target.getAbsolutePath().substring(inputFile.getAbsolutePath().length());
+
+            File output = new File(outputFile, qualifiedName);
+
+            byte[] data = onAnalyze(read(target));
+            FileUtils.writeByteArrayToFile(output, data);
         }
     }
 
