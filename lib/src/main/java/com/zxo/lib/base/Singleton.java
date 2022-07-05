@@ -38,12 +38,26 @@ public class Singleton {
 //        return instance;
 //    }
 
+    public static String name= "zxo";
+
     // 4、静态内部类
     private static class SingletonHolder{
         public static Singleton instance = new Singleton();
+        static {
+            System.out.println("静态内部类 静态变量 instance="+instance.toString());
+            System.out.println("静态内部类 静态代码块");
+
+        }
+
     }
     private Singleton(){}
     public static Singleton newInstance(){
         return SingletonHolder.instance;
     }
+
+    static {
+        System.out.println("静态变量 name="+name);
+        System.out.println("执行静态代码块");
+    }
+
 }
