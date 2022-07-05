@@ -1,5 +1,6 @@
 package com.zxo.finder.plugin.asm;
 
+
 import com.zxo.finder.plugin.AbsFinderAnalyzer;
 import com.zxo.finder.plugin.FinderPlugin;
 import com.zxo.finder.plugin.IReplace;
@@ -14,6 +15,7 @@ import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.TypePath;
+import org.objectweb.asm.commons.AdviceAdapter;
 import org.objectweb.asm.util.Printer;
 import org.objectweb.asm.util.TraceClassVisitor;
 
@@ -40,7 +42,7 @@ public class AsmTraceAnalyzer extends AbsFinderAnalyzer {
         ClassWriter writer = new ClassWriter(reader, ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES);
 //        traceVisitor = new TraceClassVisitor(new PrintWriter(System.out));
         traceVisitor = new AsmTraceClassVisitor(writer);
-        reader.accept(traceVisitor, 0);
+        reader.accept(traceVisitor, ClassReader.EXPAND_FRAMES);
         return  writer.toByteArray();
     }
 
@@ -59,6 +61,57 @@ public class AsmTraceAnalyzer extends AbsFinderAnalyzer {
         FinderPlugin.log(label);
     }
 
+
+    private class AsmTraceAdviceAdapter extends AdviceAdapter{
+
+        private String funName;
+
+        Label startLabel = new Label();
+        protected AsmTraceAdviceAdapter(int api, MethodVisitor methodVisitor, int access, String name, String descriptor) {
+            super(api, methodVisitor, access, name, descriptor);
+            this.funName = name;
+        }
+
+        @Override
+        protected void onMethodEnter() {
+            super.onMethodEnter();
+            mv.visitLabel(startLabel);
+            mv.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+            mv.visitLdcInsn("enter" + funName);
+            mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);
+        }
+
+        @Override
+        public void visitMaxs(int maxStack, int maxLocals) {
+            Label endLable = new Label();
+            mv.visitTryCatchBlock(startLabel, endLable, endLable, null);
+            mv.visitLabel(endLable);
+
+            finallyBlock(Opcodes.ATHROW);
+            // 将异常抛出
+            mv.visitInsn(Opcodes.ATHROW);
+            super.visitMaxs(maxStack, maxLocals);
+        }
+
+        private void finallyBlock(int opcode) {
+            mv.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/System", "out", "Ljava/io/PrintStream;");
+            if (opcode == Opcodes.ATHROW){
+                mv.visitLdcInsn("err enter" + funName);
+            } else {
+                mv.visitLdcInsn("normal enter" + funName);
+            }
+            mv.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/io/PrintStream", "println", "(Ljava/lang/String;)V", false);
+        }
+
+        @Override
+        protected void onMethodExit(int opcode) {
+            super.onMethodExit(opcode);
+            if (opcode != ATHROW) {
+                finallyBlock(opcode);
+            }
+        }
+    }
+
     private  class AsmTraceClassVisitor extends ClassVisitor {
 
         public AsmTraceClassVisitor(ClassWriter cw) {
@@ -74,7 +127,9 @@ public class AsmTraceAnalyzer extends AbsFinderAnalyzer {
         @Override
         public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
             printLabel("visitMethod："+TransformUtil.transformAccess(access) +" "+name +descriptor);
-            return methodVisitor.setSource(super.visitMethod(access, name, descriptor, signature, exceptions));
+            MethodVisitor methodVisitor = super.visitMethod(access, name, descriptor, signature, exceptions);
+//            return methodVisitor.setSource();
+            return new AsmTraceAdviceAdapter(Opcodes.ASM6, methodVisitor, access, name, descriptor);
         }
 
         @Override

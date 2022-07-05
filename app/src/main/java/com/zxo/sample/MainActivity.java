@@ -27,22 +27,29 @@ public class MainActivity extends AppCompatActivity {
         int networkType = tm.getNetworkType();
         String test = getTest();
 
-        if (TextUtils.isEmpty(test)){
+
+        if (TextUtils.isEmpty(test)) {
             log(brand);
             log(brandInfo);
             log(version);
             log(model);
         } else {
             log(test);
-            log(networkType+"");
+            log(networkType + "");
         }
     }
 
     private void log(String brand) {
-        Log.e("MainActivity", "brand="+brand);
+        try {
+            int a = 1 / 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        Log.e("MainActivity", "brand=" + brand);
     }
 
-    private String getTest(){
+    private String getTest() {
         return "hahah";
     }
 
