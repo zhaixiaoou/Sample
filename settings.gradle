@@ -1,3 +1,4 @@
+include ':finder'
 include ':lib'
 include ':app'
 rootProject.name = "Sample"

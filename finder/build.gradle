@@ -1,0 +1,12 @@
+apply plugin: 'java-library'
+apply from: './maven-upload.gradle'
+
+dependencies {
+
+    api gradleApi()
+
+    api localGroovy()
+
+    implementation 'com.android.tools.build:gradle:4.0.2'
+
+}

@@ -1,0 +1,24 @@
+apply plugin: 'com.zxo.finder.plugin'
+
+finderConfig{
+    classes = [
+            'android/os/Build',
+            'com/zxo/sample/MainActivity',
+            'android/telephony/TelephonyManager',
+            'android/provider/Setting$System',
+            'android/location/LocationManager',
+            'android/telecom/TelecomManager',
+    ]
+    methods = [
+    ]
+
+    fields = [
+            'android/os/Build.BRAND:Ljava/lang/String'
+    ]
+
+    ignorePrefixes = [
+            'androidx/', 'android/', 'com/google', 'com/zxo/sample/BaseInfo'
+    ]
+
+    replaceEnable = true
+}
