@@ -19,6 +19,7 @@ import com.android.build.gradle.internal.plugins.LibraryPlugin;
 import com.android.build.gradle.internal.publishing.AndroidArtifacts;
 import com.android.build.gradle.internal.scope.VariantScope;
 import com.zxo.finder.plugin.asm.AsmFinderAnalyzer;
+import com.zxo.finder.plugin.asm.AsmTraceAnalyzer;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -43,7 +44,8 @@ import java.util.Set;
 public class FinderPlugin implements Plugin<Project> {
 
     private static final String CONFIG_KEY = "finderConfig";
-    private AbsFinderAnalyzer finderAnalyzer = new AsmFinderAnalyzer();
+//    private AbsFinderAnalyzer finderAnalyzer = new AsmFinderAnalyzer();
+    private AbsFinderAnalyzer finderAnalyzer = new AsmTraceAnalyzer();
 
     ///////////////////////////////////////////
     /// 统一日志处理
@@ -91,7 +93,7 @@ public class FinderPlugin implements Plugin<Project> {
             // 获取配置信息
             FinderConfig config = (FinderConfig) project.getProperties().get(CONFIG_KEY);
             try{
-                finderAnalyzer.setConfig(config);
+//                finderAnalyzer.setConfig(config);
             } catch (Throwable e){
                 e.printStackTrace();
             }
@@ -105,7 +107,7 @@ public class FinderPlugin implements Plugin<Project> {
                 for (DirectoryInput dir: dirs){
                     if (dir.getFile().isDirectory()){
                         classPaths.add(dir.getFile().toURI().toURL());
-                        FinderPlugin.log("Directory File classpath="+dir.getFile().toURI().toURL());
+//                        FinderPlugin.log("Directory File classpath="+dir.getFile().toURI().toURL());
                     }
                 }
             }
@@ -183,7 +185,7 @@ public class FinderPlugin implements Plugin<Project> {
                         for (File f: fileCollection){
                             try {
                                 classPaths.add(f.toURI().toURL());
-                                FinderPlugin.log("Java File classpath="+f.toURI().toURL());
+//                                FinderPlugin.log("Java File classpath="+f.toURI().toURL());
                             } catch (MalformedURLException e) {
                                 e.printStackTrace();
                             }

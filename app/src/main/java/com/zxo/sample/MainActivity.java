@@ -7,6 +7,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.telephony.TelephonyManager;
+import android.text.TextUtils;
 import android.util.Log;
 
 public class MainActivity extends AppCompatActivity {
@@ -26,12 +27,15 @@ public class MainActivity extends AppCompatActivity {
         int networkType = tm.getNetworkType();
         String test = getTest();
 
-        log(brand);
-        log(brandInfo);
-        log(version);
-        log(model);
-        log(test);
-        log(networkType+"");
+        if (TextUtils.isEmpty(test)){
+            log(brand);
+            log(brandInfo);
+            log(version);
+            log(model);
+        } else {
+            log(test);
+            log(networkType+"");
+        }
     }
 
     private void log(String brand) {
