@@ -43,6 +43,8 @@ public abstract class AbsFinderAnalyzer {
     protected File outputFile;
     protected File temporaryDir;
 
+
+
     protected ClassLoader classLoader;
 
     public void setConfig(FinderConfig config) {

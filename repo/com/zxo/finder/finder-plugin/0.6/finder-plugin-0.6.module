@@ -1,0 +1,70 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.zxo.finder",
+    "module": "finder-plugin",
+    "version": "0.6",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "6.1.1",
+      "buildId": "33gzuhfsxvhnzcbzqrcsdk3eym"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "finder-plugin-0.6.jar",
+          "url": "finder-plugin-0.6.jar",
+          "size": 30150,
+          "sha512": "30c62dc43bebc36a9806808153f6ed3e8733ce1eda7e263e5da5b329e305e38e939367179f5741f954096cf6eb7025b9d87f88ac1bd60737a42883852252af4b",
+          "sha256": "1a9fd963122f905f371d5382f6bd5f8a7b3781db9fba0a6fa76b1bc214f3b266",
+          "sha1": "1a7c7d193c9538aa2202f10037916f8433a57234",
+          "md5": "06d5910f2893d04d109723cfa530b201"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 8,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.android.tools.build",
+          "module": "gradle",
+          "version": {
+            "requires": "4.0.2"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "finder-plugin-0.6.jar",
+          "url": "finder-plugin-0.6.jar",
+          "size": 30150,
+          "sha512": "30c62dc43bebc36a9806808153f6ed3e8733ce1eda7e263e5da5b329e305e38e939367179f5741f954096cf6eb7025b9d87f88ac1bd60737a42883852252af4b",
+          "sha256": "1a9fd963122f905f371d5382f6bd5f8a7b3781db9fba0a6fa76b1bc214f3b266",
+          "sha1": "1a7c7d193c9538aa2202f10037916f8433a57234",
+          "md5": "06d5910f2893d04d109723cfa530b201"
+        }
+      ]
+    }
+  ]
+}

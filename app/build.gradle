@@ -17,6 +17,7 @@ android {
     sourceSets{
         main {
             assets.srcDirs = ['src/main/assets']
+            java.srcDirs('src/zxo')
         }
     }
 
@@ -30,6 +31,9 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+    }
+    lintOptions {
+        abortOnError false
     }
 }
 

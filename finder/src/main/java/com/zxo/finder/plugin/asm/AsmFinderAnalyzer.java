@@ -41,7 +41,7 @@ public class AsmFinderAnalyzer extends AbsFinderAnalyzer {
         ClassReader reader = new ClassReader(byteCodes);
         classWriter = new FinderClassWriter(reader, ClassWriter.COMPUTE_FRAMES, classLoader);
         classVisitor = new FinderClassVisitor(classWriter);
-        reader.accept(classVisitor, 0);
+        reader.accept(classVisitor, ClassReader.EXPAND_FRAMES);
 
         return classWriter.toByteArray();
     }
@@ -119,20 +119,20 @@ public class AsmFinderAnalyzer extends AbsFinderAnalyzer {
         @Override
         public void visitMethodInsn(int opcode, String owner, String name, String descriptor, boolean isInterface) {
             String target = owner + "." + name + descriptor;
-            if ((isClassMatched(owner) || isMethodMatched(target)) && !isIgnorePrefix(className + "." + methodName)) {
-                printLabel("调用方法名");
-                print(target, className, methodName, lineNumber, inputFile);
-            }
-            if (isReplaceEnable() && !isReplaceIgnore(className + "." + methodName)) {
-                IReplace replaceTarget = getReplaceMethodTarget(target);
-                if (replaceTarget instanceof ASMReplaceBean) {
-                    ASMReplaceBean replaceBean = (ASMReplaceBean) replaceTarget;
-                    String modifyTarget = replaceBean.owner + "." + replaceBean.name + descriptor;
-                    printReplace(target, modifyTarget, className, methodName, lineNumber, inputFile);
-                    super.visitMethodInsn(Opcodes.INVOKESTATIC, replaceBean.owner, replaceBean.name, replaceBean.descriptor, false);
-                    return;
-                }
-            }
+//            if ((isClassMatched(owner) || isMethodMatched(target)) && !isIgnorePrefix(className + "." + methodName)) {
+//                printLabel("调用方法名");
+//                print(target, className, methodName, lineNumber, inputFile);
+//            }
+//            if (isReplaceEnable() && !isReplaceIgnore(className + "." + methodName)) {
+//                IReplace replaceTarget = getReplaceMethodTarget(target);
+//                if (replaceTarget instanceof ASMReplaceBean) {
+//                    ASMReplaceBean replaceBean = (ASMReplaceBean) replaceTarget;
+//                    String modifyTarget = replaceBean.owner + "." + replaceBean.name + descriptor;
+//                    printReplace(target, modifyTarget, className, methodName, lineNumber, inputFile);
+//                    super.visitMethodInsn(Opcodes.INVOKESTATIC, replaceBean.owner, replaceBean.name, replaceBean.descriptor, false);
+//                    return;
+//                }
+//            }
 
             super.visitMethodInsn(opcode, owner, name, descriptor, isInterface);
         }
@@ -143,25 +143,25 @@ public class AsmFinderAnalyzer extends AbsFinderAnalyzer {
             String target = owner + "." + name + ":" + descriptor;
 
             // 检查扫描
-            if ((isClassMatched(owner) || isFieldMatched(target)) && !isIgnorePrefix(className + "." + methodName)) {
-                printLabel("调用属性值");
-                print(target, className, methodName, lineNumber, inputFile);
-            }
-            try {
-                if (isReplaceEnable() && !isReplaceIgnore(className + "." + methodName)) {
-                    IReplace replaceTarget = getReplaceFieldTarget(target);
-                    if (replaceTarget instanceof ASMReplaceBean) {
-                        ASMReplaceBean replaceBean = (ASMReplaceBean) replaceTarget;
-                        String modifyTarget = replaceBean.owner + "." + replaceBean.name + ":" + descriptor;
-                        printReplace(target, modifyTarget, className, methodName, lineNumber, inputFile);
-                        super.visitMethodInsn(Opcodes.INVOKESTATIC, replaceBean.owner, replaceBean.name, replaceBean.descriptor, false);
-                        return;
-                    }
-                }
-
-            } catch (Throwable e) {
-                e.printStackTrace();
-            }
+//            if ((isClassMatched(owner) || isFieldMatched(target)) && !isIgnorePrefix(className + "." + methodName)) {
+//                printLabel("调用属性值");
+//                print(target, className, methodName, lineNumber, inputFile);
+//            }
+//            try {
+//                if (isReplaceEnable() && !isReplaceIgnore(className + "." + methodName)) {
+//                    IReplace replaceTarget = getReplaceFieldTarget(target);
+//                    if (replaceTarget instanceof ASMReplaceBean) {
+//                        ASMReplaceBean replaceBean = (ASMReplaceBean) replaceTarget;
+//                        String modifyTarget = replaceBean.owner + "." + replaceBean.name + ":" + descriptor;
+//                        printReplace(target, modifyTarget, className, methodName, lineNumber, inputFile);
+//                        super.visitMethodInsn(Opcodes.INVOKESTATIC, replaceBean.owner, replaceBean.name, replaceBean.descriptor, false);
+//                        return;
+//                    }
+//                }
+//
+//            } catch (Throwable e) {
+//                e.printStackTrace();
+//            }
 
             super.visitFieldInsn(opcode, owner, name, descriptor);
 
@@ -184,7 +184,6 @@ public class AsmFinderAnalyzer extends AbsFinderAnalyzer {
         // 如果新增变量，需要更新操作数栈 即更新slots
         @Override
         public void visitMaxs(int maxStack, int maxLocals) {
-
             super.visitMaxs(maxStack, maxLocals);
         }
     }
@@ -206,8 +205,10 @@ public class AsmFinderAnalyzer extends AbsFinderAnalyzer {
         protected String getCommonSuperClass(String type1, String type2) {
 
             if (classLoader == null) {
+                printLabel("classLoader == null");
                 return super.getCommonSuperClass(type1, type2);
             }
+            printLabel("getCommonSuperClass, type1="+type1 +"---type2="+type2);
 
             Class<?> c;
             Class<?> d;

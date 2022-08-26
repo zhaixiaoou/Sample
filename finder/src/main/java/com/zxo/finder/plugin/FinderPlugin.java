@@ -31,6 +31,7 @@ import org.gradle.api.file.FileCollection;
 import org.gradle.api.plugins.PluginContainer;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -40,12 +41,18 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.Stack;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 public class FinderPlugin implements Plugin<Project> {
 
     private static final String CONFIG_KEY = "finderConfig";
-//    private AbsFinderAnalyzer finderAnalyzer = new AsmFinderAnalyzer();
-    private AbsFinderAnalyzer finderAnalyzer = new AsmTraceAnalyzer();
+    private AbsFinderAnalyzer finderAnalyzer = new AsmFinderAnalyzer();
+//    private AbsFinderAnalyzer finderAnalyzer = new AsmTraceAnalyzer();
 
     ///////////////////////////////////////////
     /// 统一日志处理
@@ -93,7 +100,7 @@ public class FinderPlugin implements Plugin<Project> {
             // 获取配置信息
             FinderConfig config = (FinderConfig) project.getProperties().get(CONFIG_KEY);
             try{
-//                finderAnalyzer.setConfig(config);
+                finderAnalyzer.setConfig(config);
             } catch (Throwable e){
                 e.printStackTrace();
             }
@@ -107,7 +114,15 @@ public class FinderPlugin implements Plugin<Project> {
                 for (DirectoryInput dir: dirs){
                     if (dir.getFile().isDirectory()){
                         classPaths.add(dir.getFile().toURI().toURL());
-//                        FinderPlugin.log("Directory File classpath="+dir.getFile().toURI().toURL());
+                        FinderPlugin.log("Directory File classpath="+dir.getFile().toURI().toURL());
+                    }
+                }
+
+                Collection<JarInput> jars = i.getJarInputs();
+                for (JarInput jar : jars){
+                    if (!jar.getFile().isDirectory()) {
+                        classPaths.add(jar.getFile().toURI().toURL());
+                        FinderPlugin.log("Jar File classpath="+jar.getFile().toURI().toURL());
                     }
                 }
             }
@@ -115,21 +130,77 @@ public class FinderPlugin implements Plugin<Project> {
             finderAnalyzer.setClassLoader(URLClassLoader.newInstance(classPaths.toArray(new URL[classPaths.size()])));
 
             finderAnalyzer.setTemporaryDir(transformInvocation.getContext().getTemporaryDir());
+
+            FinderPlugin.log("临时文件="+transformInvocation.getContext().getTemporaryDir().getAbsolutePath());
+            // 处理文件夹
+            File dirOutputFile = new File("../output.zip");
+            if (dirOutputFile.exists()){
+                dirOutputFile.delete();
+            }
+
+            ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(dirOutputFile));
+
+
             for (TransformInput i : inputs){
+
+//                Collection<DirectoryInput> dirs = i.getDirectoryInputs();
+//                for (DirectoryInput j: dirs){
+//                    File input = j.getFile();
+//                    File output = outputProvider.getContentLocation(j.getName(), j.getContentTypes(), j.getScopes(), Format.DIRECTORY);
+//                    if (input == null){
+//                        continue;
+//                    }
+//                    FinderPlugin.log("文件的input="+input.getAbsolutePath());
+//                    FinderPlugin.log("文件的output="+output.getAbsolutePath());
+//                    Stack<File> stackList= new Stack<>();
+//
+//                    if (input.isDirectory()){
+//                        stackList.push(input);
+//                        while (!stackList.isEmpty()){
+//                            File dirFile = stackList.pop();
+//                            if (dirFile.isDirectory()){
+//                                buildZipDirEntry(dirFile, zos);
+//                                File[] files = dirFile.listFiles();
+//                                if (files != null && files.length > 0){
+//                                    for (File file : files){
+//                                        if (file.isDirectory()){
+//                                            stackList.add(file);
+//                                        } else {
+//                                            buildZipEntry(file, zos);
+//                                            finderAnalyzer.execute(file, output);
+//                                        }
+//                                    }
+//                                }
+//
+//                            } else {
+//                                buildZipEntry(dirFile, zos);
+//                                finderAnalyzer.execute(dirFile, output);
+//                            }
+//
+//                        }
+//                    } else {
+//                        buildZipEntry(input, zos);
+//                        finderAnalyzer.execute(input, output);
+//                    }
+//
+//                }
+
                 Collection<JarInput> jars = i.getJarInputs();
                 //  处理jar包
                 for (JarInput j : jars){
                     File input = j.getFile();
                     File output = outputProvider.getContentLocation(j.getName(), j.getContentTypes(), j.getScopes(), Format.JAR);
-//                    FinderPlugin.log("jar包的input="+input.getAbsolutePath());
-//                    FinderPlugin.log("jar包的output="+output.getAbsolutePath());
-//                    if (input.getAbsolutePath().endsWith("jetified-BaiduLBS_Android.jar")){
+
+//                    if (input.getAbsolutePath().endsWith("BaiduLBS_Android.jar")){
+//                        FinderPlugin.log("jar包的input="+input.getAbsolutePath());
+//                        FinderPlugin.log("jar包的output="+output.getAbsolutePath());
 //                        finderAnalyzer.execute(input, output);
 //                    } else {
 //                        FileUtils.copyFile(input, output);
 //                    }
                     FileUtils.copyFile(input, output);
                 }
+
                 // 处理文件夹
                 Collection<DirectoryInput> dirs = i.getDirectoryInputs();
                 for (DirectoryInput j: dirs){
@@ -140,10 +211,41 @@ public class FinderPlugin implements Plugin<Project> {
                     }
                     FinderPlugin.log("文件的input="+input.getAbsolutePath());
                     FinderPlugin.log("文件的output="+output.getAbsolutePath());
+                    buildZip(input, zos, "");
                     finderAnalyzer.execute(input, output);
                 }
+
+
             }
 
+            zos.close();
+
+        }
+
+
+        private void buildZip(File input, ZipOutputStream zos, String parentFileName) {
+
+            String tmpFileName ;
+            try {
+                if (input.isDirectory()){
+                    tmpFileName = parentFileName + input.getName()+File.separator;
+                    ZipEntry entry = new ZipEntry(tmpFileName);
+                    zos.putNextEntry(entry);
+                    File[] files = input.listFiles();
+                    for (File file : files){
+                        buildZip(file, zos, tmpFileName);
+                    }
+                } else {
+                    tmpFileName = parentFileName + input.getName();
+                    ZipEntry entry = new ZipEntry(tmpFileName);
+                    zos.putNextEntry(entry);
+                    zos.write(FileUtils.readFileToByteArray(input));
+                    zos.closeEntry();
+                }
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         private final  String[] SUPPORT_REGEX = {
@@ -185,7 +287,7 @@ public class FinderPlugin implements Plugin<Project> {
                         for (File f: fileCollection){
                             try {
                                 classPaths.add(f.toURI().toURL());
-//                                FinderPlugin.log("Java File classpath="+f.toURI().toURL());
+                                FinderPlugin.log("Java File classpath="+f.toURI().toURL());
                             } catch (MalformedURLException e) {
                                 e.printStackTrace();
                             }
@@ -221,4 +323,6 @@ public class FinderPlugin implements Plugin<Project> {
             return false;
         }
     }
+
+
 }
