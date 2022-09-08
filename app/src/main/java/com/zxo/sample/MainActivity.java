@@ -15,6 +15,8 @@ import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.zxo.widget.LargeImageView;
+
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -27,6 +29,8 @@ public class MainActivity extends AppCompatActivity {
   private TextView tvAIDL;
   private TextView tvText;
 
+  private LargeImageView largeImageView;
+  
   private final static int SIZE = 100;
 
   private final View.OnClickListener clickListener = new View.OnClickListener() {
@@ -115,12 +119,16 @@ public class MainActivity extends AppCompatActivity {
     tvWebview = findViewById(R.id.activity_main_webview);
     tvAIDL = findViewById(R.id.activity_main_aidl);
     tvText = findViewById(R.id.activity_main_text);
+    
+    largeImageView = findViewById(R.id.activity_main_test_large_image);
 
     tvCompress.setOnClickListener(clickListener);
     tvLibCompress.setOnClickListener(clickListener);
     tvWebview.setOnClickListener(clickListener);
     tvAIDL.setOnClickListener(clickListener);
     tvText.setOnClickListener(clickListener);
+    
+    loadLargeImageView();
 
     BaseInfo.init(this);
     String brand = Build.BRAND;
@@ -142,6 +150,16 @@ public class MainActivity extends AppCompatActivity {
     } else {
       log(test);
       log(networkType + "");
+    }
+  }
+
+  private void loadLargeImageView() {
+
+    try {
+      InputStream is = getAssets().open("big_image.jpg");
+      largeImageView.setImageUrl(is);
+    } catch (IOException e) {
+      e.printStackTrace();
     }
   }
 
