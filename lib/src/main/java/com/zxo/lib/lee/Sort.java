@@ -25,9 +25,13 @@ public class Sort {
   }
 
   public void swap(int[] source, int before, int after) {
-    int temp = source[before];
-    source[before] = source[after];
-    source[after] = temp;
+//    int temp = source[before];
+//    source[before] = source[after];
+//    source[after] = temp;
+    // 一个数对另一个数进行2次异或操作 这个数不变
+    source[before] = source[before] ^ source[after];
+    source[after] = source[before] ^ source[after];
+    source[before] = source[before] ^ source[after];
   }
 
   /**
@@ -138,6 +142,12 @@ public class Sort {
 
   /**
    * 快速排序
+   * 找一个基准值， 普遍以第一元素为基准值，也可以取左中右的中间数据最为基准值，避免算法复杂度退化
+   * 需要两个指针left、right。分别指向开始和结尾的位置。
+   * 从right开始，对比基准值， 大于基准值，则right--; 如果小于则将right位置的值赋值给left位置 left++ (开始left对应的基准值已保存为temp)
+   * 接着从left开始，对比基准值，小于基准值，则left++; 如果大于则将left位置的值赋值给right位置，再依次从right开始，直到left==right 再将temp赋值给left位置。
+   * 此时 left之前都比temp小，之后比temp大。
+   * 再分割为两个数组，重复上述过程
    * @param source
    * @return
    */
