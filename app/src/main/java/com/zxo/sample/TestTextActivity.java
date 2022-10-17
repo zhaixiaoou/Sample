@@ -11,6 +11,7 @@ import android.widget.EditText;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.zxo.leak.RunnableProxy;
 import com.zxo.sample.text.IFormatSpan;
 
 public class TestTextActivity extends AppCompatActivity {
@@ -27,6 +28,8 @@ public class TestTextActivity extends AppCompatActivity {
     InputFilter[] filters = new InputFilter[]{new InputFilter.LengthFilter(10), new TestFilter()};
 
     editText.setFilters(filters);
+
+    new Thread(new RunnableProxy(this));
   }
 
   private class TestFilter implements InputFilter{
