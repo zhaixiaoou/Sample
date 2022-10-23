@@ -1,5 +1,7 @@
 package com.zxo.lib.base;
 
+import java.io.Serializable;
+
 /**
  * 单例模式的几种方式
  * 1、懒汉式
@@ -7,7 +9,7 @@ package com.zxo.lib.base;
  * 3、双重校验锁
  * 4、静态内部类
  */
-public class Singleton {
+public class Singleton  implements Serializable {
 
     // 1、饿汉式
 //    private static Singleton instance = new Singleton();
@@ -46,4 +48,9 @@ public class Singleton {
     public static Singleton newInstance(){
         return SingletonHolder.instance;
     }
+
+    public Object readResolve() {
+        return SingletonHolder.instance;
+    }
+
 }
