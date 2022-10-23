@@ -1,7 +1,5 @@
 package com.zxo.lib.base;
 
-import java.io.Serializable;
-
 /**
  * 单例模式的几种方式
  * 1、懒汉式
@@ -40,9 +38,17 @@ public class Singleton  implements Serializable {
 //        return instance;
 //    }
 
+    public static String name= "zxo";
+
     // 4、静态内部类
     private static class SingletonHolder{
         public static Singleton instance = new Singleton();
+        static {
+            System.out.println("静态内部类 静态变量 instance="+instance.toString());
+            System.out.println("静态内部类 静态代码块");
+
+        }
+
     }
     private Singleton(){}
     public static Singleton newInstance(){
@@ -51,6 +57,12 @@ public class Singleton  implements Serializable {
 
     public Object readResolve() {
         return SingletonHolder.instance;
+    }
+
+
+    static {
+        System.out.println("静态变量 name="+name);
+        System.out.println("执行静态代码块");
     }
 
 }

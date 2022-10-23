@@ -2,3 +2,6 @@ include ':finder'
 include ':lib'
 include ':app'
 rootProject.name = "Sample"
+//include ':cpp'
+//include ':nativejpeg'
+include ':libjpeg'
