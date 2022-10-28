@@ -7,7 +7,7 @@ package com.zxo.lib.base;
  * 3、双重校验锁
  * 4、静态内部类
  */
-public class Singleton {
+public class Singleton  implements Serializable {
 
     // 1、饿汉式
 //    private static Singleton instance = new Singleton();
@@ -54,6 +54,11 @@ public class Singleton {
     public static Singleton newInstance(){
         return SingletonHolder.instance;
     }
+
+    public Object readResolve() {
+        return SingletonHolder.instance;
+    }
+
 
     static {
         System.out.println("静态变量 name="+name);
