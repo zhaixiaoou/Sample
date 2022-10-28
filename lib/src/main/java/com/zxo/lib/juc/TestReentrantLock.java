@@ -10,8 +10,8 @@ public class TestReentrantLock {
 
   public static void main(String[] args) {
 
-    testCondition();
-//    testSynchronized();
+//    testCondition();
+    testSynchronized();
   }
 
   /**
