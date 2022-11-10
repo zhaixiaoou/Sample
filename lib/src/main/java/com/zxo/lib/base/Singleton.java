@@ -7,7 +7,7 @@ package com.zxo.lib.base;
  * 3、双重校验锁
  * 4、静态内部类
  */
-public class Singleton  implements Serializable {
+public class Singleton  {
 
     // 1、饿汉式
 //    private static Singleton instance = new Singleton();
